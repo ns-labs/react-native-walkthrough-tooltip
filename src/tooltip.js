@@ -135,11 +135,12 @@ class Tooltip extends Component {
 
   componentDidMount() {
     this.isMounted = true;
-    if (this.state.waitingForInteractions) {
-      this.measureChildRect();
+    if(this.isMounted){
+      if (this.state.waitingForInteractions) {
+        this.measureChildRect();
+      }
+      Dimensions.addEventListener("change", this.updateWindowDims);
     }
-
-    Dimensions.addEventListener("change", this.updateWindowDims);
   }
 
   componentDidUpdate(prevProps, prevState) {
