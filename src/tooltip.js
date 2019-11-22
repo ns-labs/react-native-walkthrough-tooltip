@@ -56,7 +56,7 @@ const invertPlacement = (placement) => {
 };
 
 class Tooltip extends Component {
-  isMounted = false;
+  _isMounted = false;
   static defaultProps = {
     allowChildInteraction: true,
     arrowSize: new Size(16, 8),
@@ -134,8 +134,8 @@ class Tooltip extends Component {
   }
 
   componentDidMount() {
-    this.isMounted = true;
-    if(this.isMounted){
+    this._isMounted = true;
+    if(this._isMounted){
       if (this.state.waitingForInteractions) {
         this.measureChildRect();
       }
@@ -152,7 +152,7 @@ class Tooltip extends Component {
     const becameVisible = isVisible && !prevProps.isVisible;
     const insetsChanged = !rfcIsEqual(prevState.displayInsets, displayInsets);
 
-    if (this.isMounted) {
+    if (this._isMounted) {
       if (contentChanged || placementChanged || becameVisible || insetsChanged) {
         setTimeout(() => {
           this.measureChildRect();
@@ -162,7 +162,7 @@ class Tooltip extends Component {
   }
 
   componentWillUnmount() {
-    this.isMounted = false;
+    this._isMounted = false;
     Dimensions.removeEventListener("change", this.updateWindowDims);
   }
 
@@ -199,7 +199,7 @@ class Tooltip extends Component {
   }
 
   updateWindowDims = (dims) => {
-    if (this.isMounted) {
+    if (this._isMounted) {
       this.setState(
         {
           windowDims: dims.window,
@@ -239,7 +239,7 @@ class Tooltip extends Component {
   };
 
   onChildMeasurementComplete = (rect) => {
-    if (this.isMounted) {
+    if (this._isMounted) {
       this.setState(
         {
           childRect: rect,
