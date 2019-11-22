@@ -135,11 +135,12 @@ class Tooltip extends Component {
 
   componentDidMount() {
     this._isMounted = true;
-    if (this.state.waitingForInteractions) {
-      this.measureChildRect();
+    if(this._isMounted){
+      if (this.state.waitingForInteractions) {
+        this.measureChildRect();
+      }
+      Dimensions.addEventListener("change", this.updateWindowDims);
     }
-
-    Dimensions.addEventListener("change", this.updateWindowDims);
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -151,10 +152,12 @@ class Tooltip extends Component {
     const becameVisible = isVisible && !prevProps.isVisible;
     const insetsChanged = !rfcIsEqual(prevState.displayInsets, displayInsets);
 
-    if (contentChanged || placementChanged || becameVisible || insetsChanged) {
-      setTimeout(() => {
-        this.measureChildRect();
-      });
+    if (this._isMounted) {
+      if (contentChanged || placementChanged || becameVisible || insetsChanged) {
+        setTimeout(() => {
+          this.measureChildRect();
+        });
+      }
     }
   }
 
@@ -196,22 +199,24 @@ class Tooltip extends Component {
   }
 
   updateWindowDims = (dims) => {
-    this.setState(
-      {
-        windowDims: dims.window,
-        contentSize: new Size(0, 0),
-        adjustedContentSize: new Size(0, 0),
-        anchorPoint: new Point(0, 0),
-        tooltipOrigin: new Point(0, 0),
-        childRect: new Rect(0, 0, 0, 0),
-        measurementsFinished: false
-      },
-      () => {
-        setTimeout(() => {
-          this.measureChildRect();
-        }, 500); // give the rotation a moment to finish
-      }
-    );
+    if (this._isMounted) {
+      this.setState(
+        {
+          windowDims: dims.window,
+          contentSize: new Size(0, 0),
+          adjustedContentSize: new Size(0, 0),
+          anchorPoint: new Point(0, 0),
+          tooltipOrigin: new Point(0, 0),
+          childRect: new Rect(0, 0, 0, 0),
+          measurementsFinished: false
+        },
+        () => {
+          setTimeout(() => {
+            this.measureChildRect();
+          }, 500); // give the rotation a moment to finish
+        }
+      );
+    } 
   };
 
   doChildlessPlacement = () => {
@@ -234,18 +239,20 @@ class Tooltip extends Component {
   };
 
   onChildMeasurementComplete = (rect) => {
-    this.setState(
-      {
-        childRect: rect,
-        waitingForInteractions: false
-      },
-      () => {
-        this.isMeasuringChild = false;
-        if (this.state.contentSize.width) {
-          this._updateGeometry();
+    if (this._isMounted) {
+      this.setState(
+        {
+          childRect: rect,
+          waitingForInteractions: false
+        },
+        () => {
+          this.isMeasuringChild = false;
+          if (this.state.contentSize.width) {
+            this._updateGeometry();
+          }
         }
-      }
-    );
+      );
+    }
   };
 
   measureChildRect = () => {
