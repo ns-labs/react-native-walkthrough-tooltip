@@ -152,10 +152,12 @@ class Tooltip extends Component {
     const becameVisible = isVisible && !prevProps.isVisible;
     const insetsChanged = !rfcIsEqual(prevState.displayInsets, displayInsets);
 
-    if (contentChanged || placementChanged || becameVisible || insetsChanged) {
-      setTimeout(() => {
-        this.measureChildRect();
-      });
+    if (this.isMounted) {
+      if (contentChanged || placementChanged || becameVisible || insetsChanged) {
+        setTimeout(() => {
+          this.measureChildRect();
+        });
+      }
     }
   }
 
@@ -237,18 +239,20 @@ class Tooltip extends Component {
   };
 
   onChildMeasurementComplete = (rect) => {
-    this.setState(
-      {
-        childRect: rect,
-        waitingForInteractions: false
-      },
-      () => {
-        this.isMeasuringChild = false;
-        if (this.state.contentSize.width) {
-          this._updateGeometry();
+    if (this.isMounted) {
+      this.setState(
+        {
+          childRect: rect,
+          waitingForInteractions: false
+        },
+        () => {
+          this.isMeasuringChild = false;
+          if (this.state.contentSize.width) {
+            this._updateGeometry();
+          }
         }
-      }
-    );
+      );
+    }
   };
 
   measureChildRect = () => {
