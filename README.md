@@ -1,15 +1,38 @@
 # React Native Walkthrough Tooltip [![npm](https://img.shields.io/npm/v/react-native-walkthrough-tooltip.svg)](https://www.npmjs.com/package/react-native-walkthrough-tooltip) [![npm](https://img.shields.io/npm/dm/react-native-walkthrough-tooltip.svg)](https://www.npmjs.com/package/react-native-walkthrough-tooltip)
 
-> Much credit belongs to [@jeanregisser](https://github.com/jeanregisser) and the [react-native-popover](https://github.com/jeanregisser/react-native-popover) library. Most of the animations and geometry computation belong to his library. Please check it out! It was an invaluable resource.
-
-## Tooltip
-
 React Native Walkthrough Tooltip is a fullscreen modal that highlights whichever element it wraps.\
 When not visible, the wrapped element is displayed normally.
 
-> 🎉 Now available 🎉 [`react-native-walkthrough`](https://github.com/jasongaare/react-native-walkthrough): a lightweight walkthrough library for React Native using react-native-walkthrough-tooltip
+*Used by* [`react-native-walkthrough`](https://github.com/jasongaare/react-native-walkthrough): a lightweight walkthrough library for React Native using react-native-walkthrough-tooltip
 
-## Breaking Changes in Version 1.0
+### Table of Contents
+
+  - [Installation](#installation)
+  - [Sponsorship](#sponsorship)
+  - [Breaking Changes in Version 1.0](#breaking-changes-in-version-10)
+  - [Example Usage](#example-usage)
+  - [Screenshot](#screenshot)
+  - [How it works](#how-it-works)
+  - [Props](#props)
+  - [Style Props](#style-props)
+  - [Class definitions for props](#class-definitions-for-props)
+  - [TooltipChildrenContext](#tooltipchildrencontext)
+
+### Installation
+
+```
+yarn add react-native-walkthrough-tooltip
+```
+
+### Sponsorship
+
+<a href="https://tracking.gitads.io/?repo=react-native-walkthrough-tooltip">
+ <img src="https://images.gitads.io/react-native-walkthrough-tooltip" alt="GitAds"/>
+</a>
+
+> `react-native-walkthrough-tooltip` is sponsored by the above tool, help us out by checking it out and signing up for a free trial
+
+### Breaking Changes in Version 1.0
 
 For Version 1.0, the library was refactored and simplified. 
 
@@ -25,14 +48,6 @@ Changes to handling users pressing the tooltip child element:
 - **No more `onChildPress` and `onChildLongPress` props** - touches are now passed to the child by default. This allows you to maintain the original functionality of the child element. Further, the tooltip will also automatically dismiss on interaction with the child element.
 - **Added `closeOnChildInteraction` prop** - if you want the user to be able to interact with the child element, but not automatically dismiss the tooltip when they do so, set this to false (true by default)
 - **Added `allowChildInteraction` prop** - if you'd like to disable interaction with the child element, set this to false (true by default). When false, tapping on the child element will call `onClose` as if the user touched the background element.
-
- 
-
-### Installation
-
-```
-yarn add react-native-walkthrough-tooltip
-```
 
 ### Example Usage
 
@@ -64,11 +79,13 @@ The tooltip wraps an element _in place_ in your React Native rendering. When it 
 
 | Prop name        | Type             | Default value                          | Description                                                                                                                                                                                                    |
 | ---------------- | ---------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| accessible | bool| true | Set this to `false` if you do not want the root touchable element to be accessible. [See docs on accessible here](https://reactnative.dev/docs/accessibility#accessibility-properties)
 | allowChildInteraction | bool| true | By default, the user can touch and interact with the child element. When this prop is false, the user cannot interact with the child element while the tooltip is visible. |
 | arrowSize        | `Size`           | { width: 16, height: 8 }               | The dimensions of the arrow on the bubble pointing to the highlighted element                                                                                                                                  |
 | backgroundColor  | string           | 'rgba(0,0,0,0.5)'                      | Color of the fullscreen background beneath the tooltip. **_Overrides_** the `backgroundStyle` prop                                                                                                             |
 | childContentSpacing | number | 4 | The distance between the tooltip-rendered child and the arrow pointing to it |
 | closeOnChildInteraction | bool | true | When child interaction is allowed, this prop determines if `onClose` should be called when the user interacts with the child element. Default is true (usually means the tooltip will dismiss once the user touches the element highlighted) |
+| closeOnContentInteraction | bool | true | this prop determines if `onClose` should be called when the user interacts with the content element. Default is true (usually means the tooltip will dismiss once the user touches the content element) |
 | content          | function/Element | `<View />`                             | This is the view displayed in the tooltip popover bubble                                                                                                                                                       |
 | displayInsets | object | { top: 24, bottom: 24, left: 24, right: 24 } | The number of pixels to inset the tooltip on the screen (think of it like padding). The tooltip bubble should never render outside of these insets, so you may need to adjust your `content` accordingly |
 | isVisible        | bool             | false                                  | When true, tooltip is displayed                                                                                                                                                                                |                                                            |
@@ -76,6 +93,7 @@ The tooltip wraps an element _in place_ in your React Native rendering. When it 
 | placement        | string           | "top" \| "center"                                  | Where to position the tooltip - options: `top, bottom, left, right, center`. Default is `top` for tooltips rendered with children Default is `center` for tooltips rendered without children. <br><br>NOTE: `center` is only available with a childless placement, and the content will be centered within the bounds defined by the `displayInsets`. |
 | showChildInTooltip | bool | true | Set this to `false` if you do NOT want to display the child alongside the tooltip when the tooltip is visible |
 | supportedOrientations | array | ["portrait", "landscape"] | This prop allows you to control the supported orientations the tooltip modal can be displayed. It correlates directly with [the prop for React Native's Modal component](https://facebook.github.io/react-native/docs/modal#supportedorientations) (has no effect if `useReactNativeModal` is false) |
+| topAdjustment          | number         | 0                                   | Value which provides additional vertical offest for the child element displayed in a tooltip. Commonly set to: `Platform.OS === 'android' ? -StatusBar.currentHeight : 0` due to an issue with React Native's measure function on Android
 | useInteractionManager | bool | false | Set this to true if you want the tooltip to wait to become visible until the callback for `InteractionManager.runAfterInteractions` is executed. Can be useful if you need to wait for navigation transitions to complete, etc. [See docs on InteractionManager here](https://facebook.github.io/react-native/docs/interactionmanager)
 | useReactNativeModal | bool| true | By default, this library uses a `<Modal>` component from React Native. If you need to disable this, and simply render an absolutely positioned full-screen view, set `useReactNativeModal={false}`. This is especially useful if you desire to render a Tooltip while you have a different `Modal` rendered.
 
