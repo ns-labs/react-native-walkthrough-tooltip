@@ -1,5 +1,5 @@
-import React, { Component } from "react";
-import PropTypes from "prop-types";
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import {
   Dimensions,
   InteractionManager,
@@ -34,22 +34,22 @@ const DEFAULT_DISPLAY_INSETS = {
   top: 24,
   bottom: 24,
   left: 24,
-  right: 24
+  right: 24,
 };
 
-const computeDisplayInsets = (insetsFromProps) =>
+const computeDisplayInsets = insetsFromProps =>
   Object.assign({}, DEFAULT_DISPLAY_INSETS, insetsFromProps);
 
-const invertPlacement = (placement) => {
+const invertPlacement = placement => {
   switch (placement) {
-    case "top":
-      return "bottom";
-    case "bottom":
-      return "top";
-    case "right":
-      return "left";
-    case "left":
-      return "right";
+    case 'top':
+      return 'bottom';
+    case 'bottom':
+      return 'top';
+    case 'right':
+      return 'left';
+    case 'left':
+      return 'right';
     default:
       return placement;
   }
@@ -60,49 +60,55 @@ class Tooltip extends Component {
   static defaultProps = {
     allowChildInteraction: true,
     arrowSize: new Size(16, 8),
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: 'rgba(0,0,0,0.5)',
     childContentSpacing: 4,
     children: null,
     closeOnChildInteraction: true,
+    closeOnContentInteraction: true,
     content: <View />,
     displayInsets: {},
     isVisible: false,
     onClose: () => {
       console.warn(
-        "[react-native-walkthrough-tooltip] onClose prop no provided"
+        '[react-native-walkthrough-tooltip] onClose prop no provided',
       );
     },
-    placement: "center", // falls back to "top" if there ARE children
+    placement: 'center', // falls back to "top" if there ARE children
     showChildInTooltip: true,
-    supportedOrientations: ["portrait", "landscape"],
+    supportedOrientations: ['portrait', 'landscape'],
     useInteractionManager: false,
-    useReactNativeModal: true
+    useReactNativeModal: true,
+    topAdjustment: 0,
+    accessible: true
   };
 
   static propTypes = {
     allowChildInteraction: PropTypes.bool,
     arrowSize: PropTypes.shape({
       height: PropTypes.number,
-      width: PropTypes.number
+      width: PropTypes.number,
     }),
     backgroundColor: PropTypes.string,
     childContentSpacing: PropTypes.number,
     children: PropTypes.oneOfType([PropTypes.node, PropTypes.func]),
     closeOnChildInteraction: PropTypes.bool,
+    closeOnContentInteraction: PropTypes.bool,
     content: PropTypes.oneOfType([PropTypes.node, PropTypes.func]),
     displayInsets: PropTypes.shape({
       top: PropTypes.number,
       bottom: PropTypes.number,
       left: PropTypes.number,
-      right: PropTypes.number
+      right: PropTypes.number,
     }),
     isVisible: PropTypes.bool,
     onClose: PropTypes.func,
-    placement: PropTypes.oneOf(["top", "left", "bottom", "right", "center"]),
+    placement: PropTypes.oneOf(['top', 'left', 'bottom', 'right', 'center']),
     showChildInTooltip: PropTypes.bool,
     supportedOrientations: PropTypes.arrayOf(PropTypes.string),
     useInteractionManager: PropTypes.bool,
-    useReactNativeModal: PropTypes.bool
+    useReactNativeModal: PropTypes.bool,
+    topAdjustment: PropTypes.number,
+    accessible: PropTypes.bool,
   };
 
   constructor(props) {
@@ -129,7 +135,7 @@ class Tooltip extends Component {
           ? invertPlacement(props.placement)
           : props.placement,
       measurementsFinished: false,
-      windowDims: Dimensions.get("window")
+      windowDims: Dimensions.get('window'),
     };
   }
 
@@ -224,17 +230,16 @@ class Tooltip extends Component {
       makeChildlessRect({
         displayInsets: this.state.displayInsets,
         placement: this.state.placement, // MUST use from state, not props
-        windowDims: this.state.windowDims
-      })
+        windowDims: this.state.windowDims,
+      }),
     );
   };
 
-  measureContent = (e) => {
+  measureContent = e => {
     const { width, height } = e.nativeEvent.layout;
     const contentSize = new Size(width, height);
-
     this.setState({ contentSize }, () => {
-      this._updateGeometry();
+      // this.computeGeometry(); //this function call is causing flickering in tooltip
     });
   };
 
@@ -248,7 +253,7 @@ class Tooltip extends Component {
         () => {
           this.isMeasuringChild = false;
           if (this.state.contentSize.width) {
-            this._updateGeometry();
+            this.computeGeometry();
           }
         }
       );
@@ -261,13 +266,19 @@ class Tooltip extends Component {
         this.isMeasuringChild = true;
         if (
           this.childWrapper.current &&
-          typeof this.childWrapper.current.measure === "function"
+          typeof this.childWrapper.current.measure === 'function'
         ) {
           this.childWrapper.current.measure(
             (x, y, width, height, pageX, pageY) => {
               const childRect = new Rect(pageX, pageY, width, height);
-              this.onChildMeasurementComplete(childRect);
-            }
+              if (
+                Object.values(childRect).every(value => value !== undefined)
+              ) {
+                this.onChildMeasurementComplete(childRect);
+              } else {
+                this.doChildlessPlacement();
+              }
+            },
           );
         } else {
           this.doChildlessPlacement();
@@ -284,56 +295,62 @@ class Tooltip extends Component {
     }
   };
 
-  _updateGeometry = () => {
-    const { contentSize } = this.state;
-    const geom = this.computeGeometry({ contentSize });
-    const { tooltipOrigin, anchorPoint, placement, adjustedContentSize } = geom;
-
-    this.setState({
-      tooltipOrigin,
-      anchorPoint,
-      placement,
-      measurementsFinished: true,
-      adjustedContentSize
-    });
-  };
-
-  computeGeometry = ({ contentSize, placement }) => {
-    const innerPlacement = placement || this.state.placement;
+  computeGeometry = () => {
     const { arrowSize, childContentSpacing } = this.props;
-    const { childRect, displayInsets, windowDims } = this.state;
+    const {
+      childRect,
+      contentSize,
+      displayInsets,
+      placement,
+      windowDims,
+    } = this.state;
 
     const options = {
       displayInsets,
       childRect,
       windowDims,
       arrowSize:
-        innerPlacement === "top" || innerPlacement === "bottom"
+        placement === 'top' || placement === 'bottom'
           ? arrowSize
           : swapSizeDimmensions(arrowSize),
       contentSize,
-      childContentSpacing
+      childContentSpacing,
     };
+
+    let geom = computeTopGeometry(options);
 
     // special case for centered, childless placement tooltip
     if (
-      innerPlacement === "center" &&
+      placement === 'center' &&
       React.Children.count(this.props.children) === 0
     ) {
-      return computeCenterGeometry(options);
+      geom = computeCenterGeometry(options);
+    } else {
+      switch (placement) {
+        case 'bottom':
+          geom = computeBottomGeometry(options);
+          break;
+        case 'left':
+          geom = computeLeftGeometry(options);
+          break;
+        case 'right':
+          geom = computeRightGeometry(options);
+          break;
+        case 'top':
+        default:
+          break; // computed just above if-else-block
+      }
     }
 
-    switch (innerPlacement) {
-      case "bottom":
-        return computeBottomGeometry(options);
-      case "left":
-        return computeLeftGeometry(options);
-      case "right":
-        return computeRightGeometry(options);
-      case "top":
-      default:
-        return computeTopGeometry(options);
-    }
+    const { tooltipOrigin, anchorPoint, adjustedContentSize } = geom;
+
+    this.setState({
+      tooltipOrigin,
+      anchorPoint,
+      placement,
+      measurementsFinished: childRect.width && contentSize.width,
+      adjustedContentSize,
+    });
   };
 
   renderChildInTooltip = () => {
@@ -349,15 +366,15 @@ class Tooltip extends Component {
       <TooltipChildrenContext.Provider value={{ tooltipDuplicate: true }}>
         <View
           onTouchEnd={onTouchEnd}
-          pointerEvents={this.props.allowChildInteraction ? "box-none" : "none"}
+          pointerEvents={this.props.allowChildInteraction ? 'box-none' : 'none'}
           style={{
-            position: "absolute",
+            position: 'absolute',
             height,
             width,
             top: y,
             left: x,
-            alignItems: "center",
-            justifyContent: "center"
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           {this.props.children}
@@ -375,13 +392,20 @@ class Tooltip extends Component {
       measurementsFinished: this.state.measurementsFinished,
       ownProps: { ...this.props },
       placement: this.state.placement,
-      tooltipOrigin: this.state.tooltipOrigin
+      tooltipOrigin: this.state.tooltipOrigin,
+      topAdjustment: this.props.topAdjustment,
     });
 
     const hasChildren = React.Children.count(this.props.children) > 0;
 
+    const onPressContent = () => {
+      if (this.props.closeOnContentInteraction) {
+        this.props.onClose();
+      }
+    };
+
     return (
-      <TouchableWithoutFeedback onPress={this.props.onClose}>
+      <TouchableWithoutFeedback onPress={this.props.onClose} accessible={this.props.accessible}>
         <View style={generatedStyles.containerStyle}>
           <View style={[generatedStyles.backgroundStyle]}>
             <Androw style={generatedStyles.tooltipStyle}>
@@ -390,7 +414,9 @@ class Tooltip extends Component {
                 onLayout={this.measureContent}
                 style={generatedStyles.contentStyle}
               >
-                {this.props.content}
+                <TouchableWithoutFeedback onPress={onPressContent} accessible={this.props.accessible}>
+                  {this.props.content}
+                </TouchableWithoutFeedback>
               </View>
             </Androw>
           </View>

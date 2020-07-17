@@ -1,16 +1,16 @@
 // Type definitions for react-native-walkthrough-tooltip 1.0.0
 // Original definitions by: Siraj Alam https://github.com/sirajalam049
 
-declare module "react-native-walkthrough-tooltip" {
-  import React from "react";
-  import { GestureResponderEvent, StyleProp, ViewStyle } from "react-native";
+declare module 'react-native-walkthrough-tooltip' {
+  import React from 'react';
+  import { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 
   type Orientation =
-    | "portrait"
-    | "portrait-upside-down"
-    | "landscape"
-    | "landscape-left"
-    | "landscape-right";
+    | 'portrait'
+    | 'portrait-upside-down'
+    | 'landscape'
+    | 'landscape-left'
+    | 'landscape-right';
 
   export interface TooltipSize {
     width: number;
@@ -56,6 +56,9 @@ declare module "react-native-walkthrough-tooltip" {
     // When true (default), onClose prop is called when user touches child element
     closeOnChildInteraction?: boolean;
 
+    // When true (default), onClose prop is called when user touches content element
+    closeOnContentInteraction?: boolean;
+
     // This is the view displayed in the tooltip popover bubble
     content?: React.ReactElement;
 
@@ -74,7 +77,7 @@ declare module "react-native-walkthrough-tooltip" {
      * rendered without children. NOTE: center is only available with a childless placement,
      * and the content will be centered within the bounds defined by the displayInsets.
      */
-    placement?: "top" | "bottom" | "left" | "right" | "center";
+    placement?: 'top' | 'bottom' | 'left' | 'right' | 'center';
 
     // Determines if the tooltip's children should be shown in the foreground when the tooltip is visible.
     showChildInTooltip?: boolean;
@@ -94,6 +97,25 @@ declare module "react-native-walkthrough-tooltip" {
      * but rather an absolutely positioned view
      */
     useReactNativeModal?: boolean;
+
+    /**
+     *The distance between the tooltip-rendered child and the arrow pointing to it
+     */
+    childContentSpacing?: number;
+
+    /**
+     *The top value to set for the container. This is useful to fix the issue with StatusBar in Android.
+     ```js
+        // Usage Example
+        <Tooltip topAdjustment={Platform.OS === 'android' ? -StatusBar.currentHeight : 0} />
+     ```
+    */
+    topAdjustment?: number;
+
+    /**
+     *Set this to false if you want to override the default accessible on the root TouchableWithoutFeedback
+     */
+    accessible?: boolean;
   }
 
   /**
