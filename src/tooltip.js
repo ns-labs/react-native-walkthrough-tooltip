@@ -239,7 +239,7 @@ class Tooltip extends Component {
     const { width, height } = e.nativeEvent.layout;
     const contentSize = new Size(width, height);
     this.setState({ contentSize }, () => {
-      this.computeGeometry();
+      // this.computeGeometry(); //this function call is causing flickering in tooltip
     });
   };
 
