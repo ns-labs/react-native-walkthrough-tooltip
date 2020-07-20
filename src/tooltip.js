@@ -79,7 +79,8 @@ class Tooltip extends Component {
     useInteractionManager: false,
     useReactNativeModal: true,
     topAdjustment: 0,
-    accessible: true
+    accessible: true,
+    resetPosition: false,
   };
 
   static propTypes = {
@@ -109,6 +110,7 @@ class Tooltip extends Component {
     useReactNativeModal: PropTypes.bool,
     topAdjustment: PropTypes.number,
     accessible: PropTypes.bool,
+    resetPosition: PropTypes.bool
   };
 
   constructor(props) {
@@ -150,15 +152,18 @@ class Tooltip extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const { content, isVisible, placement } = this.props;
+    const { content, isVisible, placement, resetPosition } = this.props;
     const { displayInsets } = this.state;
-
     const contentChanged = !rfcIsEqual(prevProps.content, content);
     const placementChanged = prevProps.placement !== placement;
+    const resetPositionChanged = prevProps.resetPosition !== resetPosition;
     const becameVisible = isVisible && !prevProps.isVisible;
     const insetsChanged = !rfcIsEqual(prevState.displayInsets, displayInsets);
 
     if (this._isMounted) {
+      if(Platform.OS == 'android' && resetPositionChanged){ //Android only - Tooltip flickers on first init of app, resetting the tooltip position
+        this.resetTooltipPosition()
+      }
       if (contentChanged || placementChanged || becameVisible || insetsChanged) {
         setTimeout(() => {
           this.measureChildRect();
@@ -171,6 +176,26 @@ class Tooltip extends Component {
     this._isMounted = false;
     Dimensions.removeEventListener("change", this.updateWindowDims);
   }
+
+  resetTooltipPosition = () => {
+    if (this._isMounted) {
+      this.setState(
+        {
+          contentSize: new Size(0, 0),
+          adjustedContentSize: new Size(0, 0),
+          anchorPoint: new Point(0, 0),
+          tooltipOrigin: new Point(0, 0),
+          childRect: new Rect(0, 0, 0, 0),
+          measurementsFinished: false
+        },
+        () => {
+          setTimeout(() => {
+            this.measureChildRect();
+          }, 500); // give the rotation a moment to finish
+        }
+      );
+    } 
+  };
 
   static getDerivedStateFromProps(nextProps, prevState) {
     const nextState = {};
@@ -239,7 +264,9 @@ class Tooltip extends Component {
     const { width, height } = e.nativeEvent.layout;
     const contentSize = new Size(width, height);
     this.setState({ contentSize }, () => {
-      // this.computeGeometry(); //this function call is causing flickering in tooltip
+      if(Platform.OS == 'android'){
+        this.computeGeometry(); //this function call is causing flickering in tooltip
+      }
     });
   };
 
