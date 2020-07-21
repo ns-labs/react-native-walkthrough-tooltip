@@ -156,7 +156,7 @@ class Tooltip extends Component {
     const insetsChanged = !rfcIsEqual(prevState.displayInsets, displayInsets);
 
     if (this._isMounted) {
-      if(resetPositionChanged){ //Android only - Tooltip flickers on first init of app, resetting the tooltip position
+      if(resetPositionChanged){ //Tooltip flickers on first init of app, resetting the tooltip position
         this.resetTooltipPosition()
       }
       if (contentChanged || placementChanged || becameVisible || insetsChanged) {
